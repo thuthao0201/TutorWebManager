@@ -304,7 +304,7 @@ export default function Students() {
                   <th>Tên học sinh</th>
                   <th>Email</th>
                   <th>Số điện thoại</th>
-                  <th>Lớp</th>
+                  {/* <th>Lớp</th> */}
                   <th>Ngày tham gia</th>
                   <th>Trạng thái</th>
                   <th>Thao tác</th>
@@ -318,7 +318,7 @@ export default function Students() {
                       <td>{student.name}</td>
                       <td>{student.email}</td>
                       <td>{student.phone}</td>
-                      <td>{student.grade}</td>
+                      {/* <td>{student.grade}</td> */}
                       <td>{student.joinDate}</td>
                       <td>
                         <span className={`status-badge ${student.status}`}>

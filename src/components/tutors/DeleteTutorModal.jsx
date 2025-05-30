@@ -9,16 +9,17 @@ export default function DeleteTutorModal({ show, onClose, tutor, onDelete }) {
       <div className="modal-container confirm-modal">
         <div className="modal-header">
           <h2>Xác nhận xóa gia sư</h2>
-          <button className="close-modal" onClick={onClose}>
+          {/* <button className="close-modal" onClick={onClose}>
             <FiX />
-          </button>
+          </button> */}
         </div>
         <div className="modal-body">
-          <div>
+          {/* <div>
             <FiTrash2 />
-          </div>
+          </div> */}
           <p className="confirm-message">
-            Bạn có chắc chắn muốn xóa gia sư <strong>{tutor.name}</strong>?
+            Bạn có chắc chắn muốn xóa gia sư{" "}
+            <strong>{tutor.userId.name}</strong>?
           </p>
           <p className="confirm-description">
             Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu liên quan
@@ -29,7 +30,7 @@ export default function DeleteTutorModal({ show, onClose, tutor, onDelete }) {
           <button className="cancel-button" onClick={onClose}>
             Hủy
           </button>
-          <button className="delete-button" onClick={onDelete}>
+          <button className="delete-button" onClick={() => onDelete()}>
             Xóa
           </button>
         </div>

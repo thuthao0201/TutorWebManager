@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/Login.css";
 import { FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext"; // Import useAuth hook
 // import logo from "../assets/react.svg"; // Thay đổi đường dẫn logo nếu cần
+import "../styles/Login.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,6 +14,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,31 +24,27 @@ export default function Login() {
       return;
     }
 
-    // try {
-    //   setIsLoading(true);
-    //   setError("");
+    try {
+      setIsLoading(true);
+      setError("");
 
-    //   await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await login(email, password);
 
-    //   if (email === "admin@smarttutor.com" && password === "admin123") {
-    //     if (rememberMe) {
-    //       localStorage.setItem("adminToken", "sample-token-value");
-    //     } else {
-    //       sessionStorage.setItem("adminToken", "sample-token-value");
-    //     }
-
-    navigate("/home");
-    //       } else {
-    //         setError("Email hoặc mật khẩu không chính xác");
-    //       }
-    //     } catch (err) {
-    //       setError(
-    //         "Đã xảy ra lỗi trong quá trình đăng nhập. Vui lòng thử lại sau."
-    //       );
-    //       console.error("Login error:", err);
-    //     } finally {
-    //       setIsLoading(false);
-    //     }
+      if (result.success) {
+        // If login successful, navigate to home page
+        navigate("/home");
+      } else {
+        // If login failed, show error message
+        setError(result.error || "Đăng nhập thất bại. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      setError(
+        "Đã xảy ra lỗi trong quá trình đăng nhập. Vui lòng thử lại sau."
+      );
+      console.error("Login error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,7 +67,7 @@ export default function Login() {
               </div>
             )}
 
-            <div className="form-group">
+            <div className="login-form-group">
               <p> Email</p>
               <div className="input-container">
                 {/* <FiUser className="input-icon" /> */}
@@ -84,7 +82,7 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="login-form-group">
               <p> Mật khẩu</p>
 
               <div className="input-container">
@@ -94,7 +92,7 @@ export default function Login() {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu của bạn"
+                  placeholder="Nhập mật khẩu"
                   autoComplete="current-password"
                 />
                 <button

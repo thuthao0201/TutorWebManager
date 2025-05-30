@@ -3,50 +3,138 @@ import { useNavigate } from "react-router-dom";
 import {
   FiUsers,
   FiUserCheck,
-  FiUserX,
   FiCalendar,
   FiDollarSign,
-  FiBarChart2,
   FiAlertCircle,
-  FiClock,
-  FiTrendingUp,
   FiChevronRight,
   FiRefreshCw,
-  FiPieChart,
 } from "react-icons/fi";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import "../styles/Home.css";
+import { ApiClient } from "../config/api";
 
 export default function Home() {
+  const api = ApiClient();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [tutorStats, setTutorStats] = useState({ total: 0, newThisMonth: 0 });
+  const [studentStats, setStudentStats] = useState({
+    total: 0,
+    newThisMonth: 0,
+  });
+  const [classStats, setClassStats] = useState({
+    total: 0,
+    completed: 0,
+    upcoming: 0,
+  });
+  const [revenueStats, setRevenueStats] = useState({
+    monthlyRevenue: 0,
+    percentIncrease: 0,
+  });
+  const [recentTutors, setRecentTutors] = useState([]);
+  const [recentStudents, setRecentStudents] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        console.log("Fetching data...");
+
+        const tutorResponse = await api.get("/api/tutors/stats");
+        console.log("phản hồi từ API:", tutorResponse);
+        if (tutorResponse.status === "success") {
+          setTutorStats(tutorResponse.data);
+        }
+
+        const studentResponse = await api.get("/api/users/stats");
+        console.log("Student response:", studentResponse);
+        if (studentResponse.status === "success") {
+          setStudentStats(studentResponse.data);
+        }
+
+        const classResponse = await api.get("/api/classes/stats");
+        console.log("Class response:", classResponse);
+        if (classResponse.status === "success") {
+          setClassStats(classResponse.data);
+        }
+
+        const revenueResponse = await api.get("/api/classes/revenue");
+        console.log("Revenue response:", revenueResponse);
+        if (revenueResponse.status === "success") {
+          setRevenueStats(revenueResponse.data);
+        }
+
+        const recentTutorsResponse = await api.get("/api/tutors", {
+          params: {
+            isNew: "true",
+            limit: 3,
+            page: 1,
+            sort: "newest",
+          },
+        });
+        if (recentTutorsResponse.status === "success") {
+          const formattedTutors = recentTutorsResponse.data.map((tutor) => ({
+            id: tutor._id,
+            name: tutor.userId.name,
+            subject: tutor.subjects.map((s) => s.name).join(", "),
+            joinDate: new Date(tutor.createdAt).toLocaleDateString("vi-VN"),
+            status: tutor.status || "active",
+          }));
+          setRecentTutors(formattedTutors);
+        }
+
+        const recentStudentsResponse = await api.get("/api/users", {
+          params: {
+            isNew: "true",
+            limit: 3,
+            page: 1,
+            sort: "newest",
+          },
+        });
+        if (recentStudentsResponse.status === "success") {
+          const formattedStudents = recentStudentsResponse.data.map(
+            (student) => ({
+              id: student._id,
+              name: student.name,
+              grade: student.grade,
+              joinDate: new Date(student.createdAt).toLocaleDateString("vi-VN"),
+            })
+          );
+          setRecentStudents(formattedStudents);
+        }
+      } catch (error) {
+        console.error("Error fetching: ", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Dữ liệu tổng quan
   const [dashboardData, setDashboardData] = useState({
     tutorStats: {
       total: 56,
-      active: 42,
-      pending: 8,
-      blocked: 6,
+      // active: 42,
+      // pending: 8, // Chờ xác nhận
+      // blocked: 6, // Đã khóa
       newThisMonth: 12,
     },
     studentStats: {
       total: 128,
-      active: 110,
-      blocked: 18,
+      // active: 110,
+      // blocked: 18,
       newThisMonth: 24,
     },
     scheduleStats: {
       completed: 86,
       upcoming: 42,
-      cancelled: 12,
-      missed: 5,
     },
     revenueStats: {
       monthlyRevenue: 28500000,
-      pendingPayments: 4200000,
-      completedPayments: 24300000,
       percentIncrease: 18,
     },
   });
@@ -219,13 +307,6 @@ export default function Home() {
       <Sidebar />
       <Header />
 
-      {/* <header className="header">
-        <div className="header-icons">
-          <FaBell />
-          <RxAvatar />
-        </div>
-      </header> */}
-
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h1>Tổng quan hệ thống</h1>
@@ -245,15 +326,15 @@ export default function Home() {
               {renderStatsCard(
                 <FiUserCheck />,
                 "Gia sư",
-                dashboardData.tutorStats.total,
+                tutorStats.total,
                 <>
-                  <span className="highlight">
+                  {/* <span className="highlight">
                     {dashboardData.tutorStats.active}
                   </span>{" "}
-                  đang hoạt động
+                  đang hoạt động */}
                   <span className="highlight green">
                     {" "}
-                    +{dashboardData.tutorStats.newThisMonth}
+                    +{tutorStats.newThisMonth}
                   </span>{" "}
                   mới
                 </>,
@@ -263,15 +344,15 @@ export default function Home() {
               {renderStatsCard(
                 <FiUsers />,
                 "Học sinh",
-                dashboardData.studentStats.total,
+                studentStats.total,
                 <>
-                  <span className="highlight">
+                  {/* <span className="highlight">
                     {dashboardData.studentStats.active}
                   </span>{" "}
-                  đang hoạt động
+                  đang hoạt động */}
                   <span className="highlight green">
                     {" "}
-                    +{dashboardData.studentStats.newThisMonth}
+                    +{studentStats.newThisMonth}
                   </span>{" "}
                   mới
                 </>,
@@ -281,15 +362,12 @@ export default function Home() {
               {renderStatsCard(
                 <FiCalendar />,
                 "Buổi học tháng này",
-                dashboardData.scheduleStats.completed +
-                  dashboardData.scheduleStats.upcoming,
+                classStats.total,
                 <>
-                  <span className="highlight">
-                    {dashboardData.scheduleStats.completed}
-                  </span>{" "}
-                  đã hoàn thành{" "}
+                  <span className="highlight">{classStats.completed}</span> đã
+                  hoàn thành{" "}
                   <span className="highlight green">
-                    +{dashboardData.scheduleStats.upcoming}
+                    +{classStats.upcoming}
                   </span>{" "}
                   sắp tới
                 </>,
@@ -298,12 +376,10 @@ export default function Home() {
               {renderStatsCard(
                 <FiDollarSign />,
                 "Doanh thu tháng",
-                formatCurrency(
-                  dashboardData.revenueStats.monthlyRevenue
-                ).replace("₫", "VNĐ"),
+                formatCurrency(revenueStats.monthlyRevenue).replace("₫", "VNĐ"),
                 <>
                   <span className="highlight green">
-                    +{dashboardData.revenueStats.percentIncrease}%
+                    +{revenueStats.percentIncrease}%
                   </span>{" "}
                   so với tháng trước
                 </>,
@@ -334,7 +410,7 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody>
-                      {newTutors.slice(0, 3).map((tutor) => (
+                      {recentTutors.slice(0, 3).map((tutor) => (
                         <tr key={tutor.id}>
                           <td>{tutor.name}</td>
                           <td>{tutor.subject}</td>
@@ -371,15 +447,15 @@ export default function Home() {
                       {" "}
                       <tr>
                         <th>Tên</th>
-                        <th>Lớp</th>
+                        {/* <th>Lớp</th> */}
                         <th>Ngày tham gia</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {newStudents.slice(0, 3).map((student) => (
+                      {recentStudents.slice(0, 3).map((student) => (
                         <tr key={student.id}>
                           <td>{student.name}</td>
-                          <td>{student.grade}</td>
+                          {/* <td>{student.grade}</td> */}
                           <td>{student.joinDate}</td>
                         </tr>
                       ))}
@@ -388,7 +464,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="dashboard-row">
+            {/* <div className="dashboard-row">
               <div className="dashboard-card">
                 <div className="card-header">
                   <h3>
@@ -488,7 +564,7 @@ export default function Home() {
                   </table>
                 </div>
               </div>
-            </div>
+            </div> */}
           </>
         )}
       </div>

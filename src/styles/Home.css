@@ -96,7 +96,7 @@
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 20px;
+  padding: 16px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -120,10 +120,13 @@
 }
 
 .stats-icon.primary {
+  margin-left: 12px;
   background-color: var(--red500);
 }
 
 .stats-icon.info {
+  margin-left: 12px;
+
   background-color: #2196f3;
 }
 

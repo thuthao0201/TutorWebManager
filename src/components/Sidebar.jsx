@@ -36,21 +36,21 @@ export default function Sidebar() {
       icon: <FiCalendar />,
       path: "/schedule",
     },
-    {
-      name: "Thanh toán",
-      icon: <FiCreditCard />,
-      path: "/payments",
-    },
-    {
-      name: "Tin nhắn",
-      icon: <FiMessageCircle />,
-      path: "/messages",
-    },
-    {
-      name: "Báo cáo",
-      icon: <FiFileText />,
-      path: "/reports",
-    },
+    // {
+    //   name: "Thanh toán",
+    //   icon: <FiCreditCard />,
+    //   path: "/payments",
+    // },
+    // {
+    //   name: "Tin nhắn",
+    //   icon: <FiMessageCircle />,
+    //   path: "/messages",
+    // },
+    // {
+    //   name: "Báo cáo",
+    //   icon: <FiFileText />,
+    //   path: "/reports",
+    // },
   ];
 
   const bottomMenuItems = [

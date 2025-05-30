@@ -18,10 +18,12 @@ import Header from "../components/Header";
 import AddEditTutorModal from "../components/tutors/AddEditTutorModal";
 import DeleteTutorModal from "../components/tutors/DeleteTutorModal";
 import BlockTutorModal from "../components/tutors/BlockTutorModal";
-import ConfirmNotification from "../components/ConfirmNotification";
+// import ConfirmNotification from "../components/ConfirmNotification";
 import "../styles/Tutors.css";
+import { ApiClient } from "../config/api";
 
 export default function Tutors() {
+  const api = ApiClient();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [tutors, setTutors] = useState([]);
@@ -29,6 +31,11 @@ export default function Tutors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [subjectFilter, setSubjectFilter] = useState("all");
+  const [gradeFilter, setGradeFilter] = useState("all");
+  const [sortFilter, setSortFilter] = useState("newest");
+  const [isFeaturedFilter, setIsFeaturedFilter] = useState(false);
+  const [isNewFilter, setIsNewFilter] = useState(false);
+  const [followedFilter, setFollowedFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
@@ -36,7 +43,7 @@ export default function Tutors() {
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
-  const [modalMode, setModalMode] = useState("add"); // add, edit
+  const [modalMode, setModalMode] = useState("add");
   const [selectedTutor, setSelectedTutor] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
 
@@ -67,166 +74,95 @@ export default function Tutors() {
     "Lớp 12",
   ];
 
-  // Load dữ liệu gia sư
   useEffect(() => {
     fetchTutors();
   }, []);
 
-  const fetchTutors = async () => {
+  // Use debounced effect for search to prevent too many API calls
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchTutorsWithFilters();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, statusFilter, subjectFilter, gradeFilter, sortFilter]);
+
+  const fetchTutors = async (filterParams = {}) => {
     setIsLoading(true);
     try {
-      // Đoạn code này sẽ gọi API để lấy danh sách gia sư
-      // Tạm thời sử dụng dữ liệu mẫu
-      setTimeout(() => {
-        const mockTutors = [
-          {
-            id: 1,
-            name: "Nguyễn Văn An",
-            email: "nguyenvanan@gmail.com",
-            phone: "0912345678",
-            subjects: ["Toán", "Lý"],
-            grades: ["Lớp 10", "Lớp 11", "Lớp 12"],
-            credentials: [
-              {
-                title: "Cử nhân Sư phạm Toán",
-                institution: "ĐH Sư phạm Hà Nội",
-                year: "2018",
-              },
-              {
-                title: "Thạc sĩ Vật lý",
-                institution: "ĐH Quốc gia Hà Nội",
-                year: "2021",
-              },
-            ],
-            hourlyRate: 200000,
-            bio: "Giáo viên có 5 năm kinh nghiệm giảng dạy Toán và Lý THPT",
-            joinDate: "01/03/2023",
-            status: "active",
-          },
-          {
-            id: 2,
-            name: "Trần Thị Bình",
-            email: "tranthibinh@gmail.com",
-            phone: "0923456789",
-            subjects: ["Văn", "Anh"],
-            grades: ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"],
-            credentials: [
-              {
-                title: "Cử nhân Ngôn ngữ Anh",
-                institution: "ĐH Ngoại ngữ",
-                year: "2019",
-              },
-            ],
-            hourlyRate: 180000,
-            bio: "Giáo viên trẻ nhiệt huyết với phương pháp giảng dạy hiện đại",
-            joinDate: "15/05/2023",
-            status: "active",
-          },
-          {
-            id: 3,
-            name: "Lê Văn Cường",
-            email: "levancuong@gmail.com",
-            phone: "0934567890",
-            subjects: ["Hóa", "Sinh"],
-            grades: ["Lớp 10", "Lớp 11", "Lớp 12"],
-            credentials: [
-              {
-                title: "Cử nhân Sinh học",
-                institution: "ĐH Khoa học Tự nhiên",
-                year: "2017",
-              },
-              {
-                title: "Chứng chỉ giảng dạy THPT",
-                institution: "Sở GD&ĐT",
-                year: "2018",
-              },
-            ],
-            hourlyRate: 190000,
-            bio: "Chuyên gia về hóa sinh, có kinh nghiệm luyện thi đại học",
-            joinDate: "10/06/2023",
-            status: "blocked",
-          },
-          {
-            id: 4,
-            name: "Phạm Thị Dung",
-            email: "phamthidung@gmail.com",
-            phone: "0945678901",
-            subjects: ["Toán", "Tin học"],
-            grades: ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"],
-            credentials: [
-              {
-                title: "Cử nhân CNTT",
-                institution: "ĐH Bách khoa Hà Nội",
-                year: "2020",
-              },
-            ],
-            hourlyRate: 170000,
-            bio: "Giáo viên Toán và Tin học với phương pháp giảng dạy trực quan",
-            joinDate: "05/08/2023",
-            status: "active",
-          },
-          {
-            id: 5,
-            name: "Hoàng Văn Em",
-            email: "hoangvanem@gmail.com",
-            phone: "0956789012",
-            subjects: ["Sử", "Địa"],
-            grades: ["Lớp 10", "Lớp 11", "Lớp 12"],
-            credentials: [
-              {
-                title: "Cử nhân Sử học",
-                institution: "ĐH Khoa học Xã hội và Nhân văn",
-                year: "2019",
-              },
-            ],
-            hourlyRate: 160000,
-            bio: "Chuyên gia về lịch sử và địa lý Việt Nam và thế giới",
-            joinDate: "20/09/2023",
-            status: "active",
-          },
-        ];
-        setTutors(mockTutors);
-        setFilteredTutors(mockTutors);
-        setIsLoading(false);
-      }, 1000);
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+
+      if (filterParams.isFeatured !== undefined) {
+        queryParams.append("isFeatured", filterParams.isFeatured);
+      }
+      if (filterParams.sort) {
+        queryParams.append("sort", filterParams.sort);
+      }
+      if (filterParams.subject && filterParams.subject !== "all") {
+        queryParams.append("subject", filterParams.subject);
+      }
+      if (filterParams.grade && filterParams.grade !== "all") {
+        queryParams.append("grade", filterParams.grade);
+      }
+      if (filterParams.isNew !== undefined) {
+        queryParams.append("isNew", filterParams.isNew);
+      }
+      if (filterParams.search && filterParams.search.trim()) {
+        queryParams.append("search", filterParams.search.trim());
+      }
+      if (filterParams.followed !== undefined) {
+        queryParams.append("followed", filterParams.followed);
+      }
+      if (filterParams.status && filterParams.status !== "all") {
+        queryParams.append("status", filterParams.status);
+      }
+
+      const apiUrl = queryParams.toString()
+        ? `/api/tutors?${queryParams.toString()}`
+        : "/api/tutors";
+
+      console.log("API URL:", apiUrl); // Debug log
+      const response = await api.get(apiUrl);
+
+      if (response.status === "success") {
+        setTutors(response.data);
+        setFilteredTutors(response.data);
+      }
+      console.log("API Response:", response.data);
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu gia sư:", error);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // Lọc gia sư khi thay đổi bộ lọc
-  useEffect(() => {
-    filterTutors();
-  }, [searchTerm, statusFilter, subjectFilter, tutors]);
+  const fetchTutorsWithFilters = () => {
+    const filterParams = {
+      search: searchTerm || undefined,
+      subject: subjectFilter !== "all" ? subjectFilter : undefined,
+      grade: gradeFilter !== "all" ? gradeFilter : undefined,
+      status: statusFilter !== "all" ? statusFilter : undefined,
+      sort: sortFilter,
+      isFeatured: isFeaturedFilter || undefined,
+      isNew: isNewFilter || undefined,
+      followed: followedFilter || undefined,
+    };
 
-  const filterTutors = () => {
-    let results = tutors;
+    // Remove undefined values
+    Object.keys(filterParams).forEach(
+      (key) => filterParams[key] === undefined && delete filterParams[key]
+    );
 
-    // Lọc theo từ khóa tìm kiếm
-    if (searchTerm) {
-      results = results.filter(
-        (tutor) =>
-          tutor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          tutor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          tutor.phone.includes(searchTerm)
-      );
-    }
+    fetchTutors(filterParams);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
 
-    // Lọc theo trạng thái
-    if (statusFilter !== "all") {
-      results = results.filter((tutor) => tutor.status === statusFilter);
-    }
-
-    // Lọc theo môn học
-    if (subjectFilter !== "all") {
-      results = results.filter((tutor) =>
-        tutor.subjects.includes(subjectFilter)
-      );
-    }
-
-    setFilteredTutors(results);
-    setCurrentPage(1);
+  const formatDate = (dateString) => {
+    const options = { day: "2-digit", month: "2-digit", year: "numeric" };
+    return new Intl.DateTimeFormat("vi-VN", options).format(
+      new Date(dateString)
+    );
   };
 
   // Định dạng tiền tệ
@@ -238,101 +174,151 @@ export default function Tutors() {
   };
 
   // Xử lý phân trang
+  const totalPages = Math.ceil(filteredTutors.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredTutors.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredTutors.length / itemsPerPage);
 
   // Xử lý chuyển trang
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Mở modal thêm mới
   const openAddModal = () => {
     setModalMode("add");
     setSelectedTutor(null);
     setShowAddEditModal(true);
   };
 
-  // Mở modal chỉnh sửa
   const openEditModal = (tutor) => {
     setModalMode("edit");
     setSelectedTutor(tutor);
     setShowAddEditModal(true);
   };
 
-  // Mở modal xác nhận xóa
   const openDeleteModal = (tutor) => {
     setSelectedTutor(tutor);
     setShowDeleteModal(true);
   };
 
-  // Mở modal xác nhận khóa/mở khóa
   const openBlockModal = (tutor) => {
     setSelectedTutor(tutor);
     setShowBlockModal(true);
   };
 
-  // Xử lý thêm gia sư mới
-  const handleAddTutor = (newTutor) => {
-    const tutorWithId = {
-      id: tutors.length + 1,
-      ...newTutor,
-      joinDate: new Date().toLocaleDateString("vi-VN"),
-    };
-
-    setTutors((prev) => [...prev, tutorWithId]);
-    setConfirmAction("Thêm gia sư thành công!");
-    setShowAddEditModal(false);
-  };
-
-  // Xử lý cập nhật gia sư
-  const handleUpdateTutor = (updatedTutor) => {
-    const updatedTutors = tutors.map((tutor) => {
-      if (tutor.id === selectedTutor.id) {
-        return {
-          ...tutor,
-          ...updatedTutor,
-        };
+  const handleAddTutor = async (newTutor) => {
+    try {
+      const response = await api.post("/api/tutors", newTutor);
+      console.log("Response:", response);
+      if (response.status === "success") {
+        setTutors((prev) => [...prev, response.data]);
+        setFilteredTutors((prev) => [...prev, response.data]);
+        setConfirmAction("Thêm gia sư thành công!");
+      } else {
+        console.error("Lỗi khi thêm gia sư:", response.statusText);
       }
-      return tutor;
-    });
-
-    setTutors(updatedTutors);
-    setConfirmAction("Cập nhật thông tin gia sư thành công!");
-    setShowAddEditModal(false);
+    } catch (error) {
+      console.error("Lỗi khi thêm gia sư:", error);
+    } finally {
+      setShowAddEditModal(false);
+    }
   };
 
-  // Xử lý xóa gia sư
-  const handleDeleteTutor = () => {
-    const updatedTutors = tutors.filter(
-      (tutor) => tutor.id !== selectedTutor.id
-    );
-    setTutors(updatedTutors);
-    setConfirmAction("Đã xóa gia sư thành công!");
-    setShowDeleteModal(false);
+  const handleUpdateTutor = async (updatedTutor) => {
+    try {
+      const response = await api.patch(
+        `/api/tutors/${selectedTutor._id}`,
+        updatedTutor
+      );
+
+      if (response.status === "success") {
+        const updatedTutors = tutors.map((tutor) =>
+          tutor._id === selectedTutor._id ? response.data : tutor
+        );
+        setTutors(updatedTutors);
+        setFilteredTutors(updatedTutors);
+        setConfirmAction("Cập nhật thông tin gia sư thành công!");
+      } else {
+        console.error("Lỗi khi cập nhật gia sư:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật gia sư:", error);
+    } finally {
+      setShowAddEditModal(false);
+    }
+  };
+
+  const handleDeleteTutor = async () => {
+    try {
+      const response = await api.del(`/api/tutors/${selectedTutor._id}`); // Thay đường dẫn bằng API thực tế
+      if (response.status === "success") {
+        const updatedTutors = tutors.filter(
+          (tutor) => tutor._id !== selectedTutor._id
+        );
+        setTutors(updatedTutors);
+        setFilteredTutors(updatedTutors);
+        setConfirmAction("Đã xóa gia sư thành công!");
+      } else {
+        console.error("Lỗi khi xóa gia sư:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa gia sư:", error);
+    } finally {
+      setShowDeleteModal(false);
+    }
   };
 
   // Xử lý khóa/mở khóa tài khoản gia sư
-  const handleToggleBlock = () => {
-    const updatedTutors = tutors.map((tutor) => {
-      if (tutor.id === selectedTutor.id) {
-        const newStatus = tutor.status === "blocked" ? "active" : "blocked";
-        return {
-          ...tutor,
-          status: newStatus,
-        };
+  const handleToggleBlock = async () => {
+    try {
+      const newStatus =
+        selectedTutor.status === "blocked" ? "active" : "blocked";
+      const response = await api.patch(`/tutors/${selectedTutor.id}/status`, {
+        status: newStatus,
+      }); // Thay đường dẫn bằng API thực tế
+      if (response.status === "success") {
+        const updatedTutors = tutors.map((tutor) =>
+          tutor._id === selectedTutor._id
+            ? { ...tutor, status: newStatus }
+            : tutor
+        );
+        setTutors(updatedTutors);
+        setFilteredTutors(updatedTutors);
+        const actionText =
+          newStatus === "active"
+            ? "Đã mở khóa tài khoản gia sư thành công!"
+            : "Đã khóa tài khoản gia sư thành công!";
+        setConfirmAction(actionText);
+      } else {
+        console.error(
+          "Lỗi khi cập nhật trạng thái gia sư:",
+          response.statusText
+        );
       }
-      return tutor;
-    });
-
-    setTutors(updatedTutors);
-    const actionText =
-      selectedTutor.status === "blocked"
-        ? "Đã mở khóa tài khoản gia sư thành công!"
-        : "Đã khóa tài khoản gia sư thành công!";
-    setConfirmAction(actionText);
-    setShowBlockModal(false);
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái gia sư:", error);
+    } finally {
+      setShowBlockModal(false);
+    }
   };
+  // const handleToggleBlock = () => {
+  //   const updatedTutors = tutors.map((tutor) => {
+  //     if (tutor.id === selectedTutor.id) {
+  //       const newStatus = tutor.status === "blocked" ? "active" : "blocked";
+  //       return {
+  //         ...tutor,
+  //         status: newStatus,
+  //       };
+  //     }
+  //     return tutor;
+  //   });
+
+  //   setTutors(updatedTutors);
+  //   const actionText =
+  //     selectedTutor.status === "blocked"
+  //       ? "Đã mở khóa tài khoản gia sư thành công!"
+  //       : "Đã khóa tài khoản gia sư thành công!";
+  //   setConfirmAction(actionText);
+  //   setShowBlockModal(false);
+  // };
 
   return (
     <div className="tutors-container">
@@ -352,7 +338,7 @@ export default function Tutors() {
             <FiSearch className="search-icon" />
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+              placeholder="Tìm kiếm tên, email, số điện thoại..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -395,7 +381,45 @@ export default function Tutors() {
               </select>
             </div>
 
-            <button className="refresh-button" onClick={fetchTutors}>
+            {/* <div className="filter-item">
+              <label>Lớp:</label>
+              <select
+                value={gradeFilter}
+                onChange={(e) => setGradeFilter(e.target.value)}
+              >
+                <option value="all">Tất cả</option>
+                {grades.map((grade, index) => (
+                  <option key={index} value={grade.replace("Lớp ", "")}>
+                    {grade}
+                  </option>
+                ))}
+              </select>
+            </div> */}
+
+            <div className="filter-item">
+              <label>Sắp xếp:</label>
+              <select
+                value={sortFilter}
+                onChange={(e) => setSortFilter(e.target.value)}
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+                <option value="price_low">Giá thấp đến cao</option>
+                <option value="price_high">Giá cao đến thấp</option>
+              </select>
+            </div>
+
+            <button
+              className="refresh-button"
+              onClick={() => {
+                setSearchTerm("");
+                setStatusFilter("all");
+                setSubjectFilter("all");
+                setGradeFilter("all");
+                setSortFilter("newest");
+                fetchTutors();
+              }}
+            >
               <FiRefreshCw /> Làm mới
             </button>
           </div>
@@ -426,44 +450,55 @@ export default function Tutors() {
                   {currentItems.length > 0 ? (
                     currentItems.map((tutor) => (
                       <tr key={tutor.id}>
-                        <td>{tutor.name}</td>
+                        <td>{tutor.userId.name}</td>
                         <td>
-                          <div>{tutor.email}</div>
-                          <div>{tutor.phone}</div>
+                          <div>{tutor.userId.email}</div>
+                          <div>{tutor.userId.phone}</div>
                         </td>
-                        <td>{tutor.subjects.join(", ")}</td>
+                        <td>
+                          {tutor.subjects
+                            .map((subject) => subject.name)
+                            .join(", ")}
+                        </td>
                         <td>
                           <div className="grade-cells">
-                            {tutor.grades.slice(0, 1).map((grade, index) => (
-                              <span key={index} className="grade-cell">
-                                {grade}
-                              </span>
-                            ))}
-                            {tutor.grades.length > 1 && (
+                            {tutor.subjects[0].grades
+                              .slice(0, 1)
+                              .map((grade, index) => (
+                                <span key={index} className="grade-cell">
+                                  Lớp {grade}
+                                </span>
+                              ))}
+                            {tutor.subjects[0].grades.length > 1 && (
                               <span className="more-grades">
-                                +{tutor.grades.length - 1}
+                                +{tutor.subjects[0].grades.length - 1}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td>{formatCurrency(tutor.hourlyRate)}</td>
-                        <td>{tutor.joinDate}</td>
+                        <td>{formatCurrency(tutor.classPrice)}</td>
+                        <td>{formatDate(tutor.createdAt)}</td>
                         <td>
-                          <span className={`status-badge ${tutor.status}`}>
-                            {tutor.status === "active" && "Hoạt động"}
+                          <span
+                            className={`status-badge ${
+                              tutor.hasCertificate ? "active" : "blocked"
+                            }`}
+                          >
+                            {tutor.hasCertificate ? "Hoạt động" : "Đã khóa"}
+                            {/* {tutor.status === "active" && "Hoạt động"} */}
                             {/* {tutor.status === "pending" && "Chờ xác nhận"} */}
-                            {tutor.status === "blocked" && "Đã khóa"}
+                            {/* {tutor.status === "blocked" && "Đã khóa"} */}
                           </span>
                         </td>
                         <td>
                           <div className="action-buttons">
-                            <button
+                            {/* <button
                               className="action-button info"
                               title="Xem chi tiết"
-                              onClick={() => navigate(`/tutors/${tutor.id}`)}
+                              onClick={() => navigate(`/tutors/${tutor._id}`)}
                             >
                               <BiSolidUserDetail />
-                            </button>
+                            </button> */}
                             <button
                               className="action-button edit"
                               title="Chỉnh sửa"
@@ -508,7 +543,7 @@ export default function Tutors() {
               </table>
             </div>
 
-            {filteredTutors.length > itemsPerPage && (
+            {filteredTutors.length > itemsPerPage && ( // Phân trang
               <div className="pagination">
                 <button
                   className={`pagination-button ${
@@ -571,7 +606,7 @@ export default function Tutors() {
         show={showBlockModal}
         onClose={() => setShowBlockModal(false)}
         tutor={selectedTutor}
-        onToggleBlock={handleToggleBlock}
+        onToggleBlock={() => handleToggleBlock(selectedTutor)}
       />
 
       {/* <ConfirmNotification
